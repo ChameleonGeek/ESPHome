@@ -1,0 +1,45 @@
+# This is a very simple configuration that controls a "dumb" RGB LED strip, which has four connections:  12v, Red Ground, Green Ground and Blue Ground.
+# For the ESP to control these strips, it needs three FETs since the ESP can't handle the voltage or current.
+# The actual function of the light is called by the Home Assistant "server," not the ESP itself.
+# I'm playing around with the PWM frequency to find the best range.  With 4000Hz, the LEDs appear to be fully off until set to 70% and then ramp from 
+# what appears to be 0 percent to 100%
+
+substitutions:
+  device_name: "rgb-strip"
+  friendly_name: "RGB Strip"
+  off_time: "15" # Delay (seconds) for light to remain on after motion sensor releases
+  transition: "100" # Time for the lights to fade up and fade down
+
+# Include the file with my typical settings
+<<: !include esp32-basic.yaml
+
+light:
+  # The RGB platform creates one "device," and allows the color channels to be specified.  It is intended for PWM-controlled lights
+  - platform: rgb
+    name: "LED Strip"
+    red: out_red
+    green: out_grn
+    blue: out_blu
+
+# I'm still playing with the PWM frequency on these outputs to create the best range.
+output:
+  # This defines the PWM pin to be used for the red channel. 
+  - platform: ledc
+    id: out_red
+    pin: GPIO16
+    frequency: "4000Hz"
+
+  # This defines the PWM pin to be used for the green channel. 
+  - platform: ledc
+    id: out_grn
+    pin: GPIO17
+    frequency: "4000Hz"
+
+  # This defines the PWM pin to be used for the blue channel. 
+  - platform: ledc
+    id: out_blu
+    pin: GPIO21
+    frequency: "4000Hz"
+
+
+
