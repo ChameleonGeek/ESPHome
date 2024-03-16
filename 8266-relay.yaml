@@ -1,0 +1,16 @@
+# Multiple lights are switched on and off using ESP01 relay modules.  They are beautifully easy and cheap, so switching power from the wall wart to the light is very simple.
+# These have their own include file
+# When I flash any new modules, I simply change the number to keep them easily identifiable
+substitutions:
+  device_name: "8266-relay-01"
+  friendly_name: "8266 Relay 01"
+  relay_name: "Relay 01"
+
+<<: !include esp01-relay-include.yaml
+  
+switch: 
+  - platform: gpio
+    pin: GPIO00
+    name: ${relay_name}
+    inverted: true
+    restore_mode: RESTORE_DEFAULT_OFF
