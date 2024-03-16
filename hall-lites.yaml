@@ -1,0 +1,26 @@
+# The back hallway at work is really dark when the main overhead lights are turned off.  Unfortunately, the restrooms are in this hallway.
+# We're using a simple white LED strip to light up this hall enough to make it safe, but not enough to interfere with the classes.
+substitutions:
+  device_name: "hall-lites"
+  friendly_name: "Hall Lights"
+  pin_ssr_ctrl: GPIO16
+  pin_scl: GPIOxx
+
+<<: !include esp32-basic.yaml
+
+# This is the component that is read and written via Home Assistant
+light:
+  - platform: monochromatic
+    name: "Light"
+    output: hall_light_relay
+    icon: "mdi:light-flood-down"
+    default_transition_length: 2500ms
+
+# This is the control for the Solid State Relay.  I'm using a fast response DC SSR, so it has a degree of PWM dimming control.  70 percent to 100 percent PWM duty cycle translates to 1 to 100 percent intensity. 
+# I'm sure I can increase this amount of control, but it hasn't been important enough for me to try
+# Using the ledc platform allows me to dim the light
+output:
+  - platform: ledc
+    id: hall_light_relay
+    pin: ${pin_ssr_ctrl}
+    
