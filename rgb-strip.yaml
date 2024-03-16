@@ -9,6 +9,9 @@ substitutions:
   friendly_name: "RGB Strip"
   off_time: "15" # Delay (seconds) for light to remain on after motion sensor releases
   transition: "100" # Time for the lights to fade up and fade down
+  pin_red: GPIO16
+  pin_grn: GPIO17
+  pin_blu: GPIO21
 
 # Include the file with my typical settings
 <<: !include esp32-basic.yaml
@@ -26,19 +29,19 @@ output:
   # This defines the PWM pin to be used for the red channel. 
   - platform: ledc
     id: out_red
-    pin: GPIO16
+    pin: ${pin_red}
     frequency: "4000Hz"
 
   # This defines the PWM pin to be used for the green channel. 
   - platform: ledc
     id: out_grn
-    pin: GPIO17
+    pin: ${pin_grn}
     frequency: "4000Hz"
 
   # This defines the PWM pin to be used for the blue channel. 
   - platform: ledc
     id: out_blu
-    pin: GPIO21
+    pin: ${pin_blu}
     frequency: "4000Hz"
 
 
