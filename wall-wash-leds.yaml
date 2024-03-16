@@ -1,0 +1,215 @@
+# This configuration controls two Bluetooth-controllable RGB flood lights from Neewer.  I was never satisfied with the phone app, which asked if I wanted to use their cloud service (for Bluetooth devices), and would take a couple of minutes
+# to connect to the lights.  By using this configuration, I haven't had to wait more than about a second for the lights to respond.
+# I plan to eventually create some transitions so that the lights shift through different colors as the class goes on.  
+# I'm not sure if the configuration is fast enough to be music-responsive, but that'd be cool.
+# Since the ESP32 was in the right place and was very capable of doing more, I decided to make this same ESP control a "dumb" RGB LED system that washes the back wall of the classroom.  I call it "dumb" because it is only controllable via infrared remote control.
+substitutions:
+  device_name: "wall-wash-leds"
+  friendly_name: "Wall Wash LEDs"
+  transition: "10"
+  pin_ir_led: GPIO25      # The pin connected to the IR LED
+  pin_wash_relay: GPIO27  # The pin connected to the relay that turns power to the "dumb" LED strip controller on/off
+
+# Include the file with my typical settings
+<<: !include esp32-basic.yaml
+
+##################################################################################################################################
+##################################################################################################################################
+#                                            IR-CONTROLLED LED SETTINGS HERE
+##################################################################################################################################
+##################################################################################################################################
+# This is the "entity" that transmits the IR codes.  The LED is connected between the defined pin and ground
+remote_transmitter:
+  pin: ${pin_ir_led}
+  carrier_duty_percent: 50%
+
+# I am using a DC SSR to switch power for the LED control unit.
+switch:
+  - platform: gpio
+    name: "Wall Wash Relay"
+    icon: mdi:awning-outline
+    pin: ${pin_wash_relay}
+    id: relay
+    
+# I wanted to be able to manually change color settings, turn the LED strip on or off and choose from the different modes from the HA dashboard.
+# These virtual buttons make it so
+button:
+  # Toggle power on the control unit via IR
+  - platform: template
+    name: "Wall Wash ON"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF02FD
+
+  # Turns on "Music setting 1"
+  - platform: template
+    id: wall_wash_music_one
+    name: "Wall Wash Music One"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF10EF
+
+  # Turns on "Music setting 2"
+  - platform: template
+    id: wall_wash_music_two
+    name: "Wall Wash Music Two"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF906F
+
+  # Turns on "Music setting 3"
+  - platform: template
+    id: wall_wash_music_three
+    name: "Wall Wash Music Three"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF50AF
+
+  # Turns on "Music setting 4"
+  - platform: template
+    id: wall_wash_music_four
+    name: "Wall Wash Music Four"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FFD02F
+
+  # Sets all LEDS on strip to static red
+  - platform: template
+    id: wall_wash_red
+    name: "Wall Wash Red"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF1AE5
+
+  # Sets all LEDS on strip to static green
+  - platform: template
+    id: wall_wash_green
+    name: "Wall Wash Green"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF9A65
+
+  # Sets all LEDS on strip to static blue
+  - platform: template
+    id: wall_wash_blue
+    name: "Wall Wash Blue"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FFA25D
+
+  # Sets all LEDS on strip to static violet
+  - platform: template
+    id: wall_wash_violet
+    name: "Wall Wash Violet"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FFB24D
+
+  # Sets all LEDS on strip to static white
+  - platform: template
+    id: wall_wash_white
+    name: "Wall Wash White"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF22DD
+
+  # Turns on LED pattern "Jump 3"
+  - platform: template
+    id: wall_wash_jump3
+    name: "Wall Wash Jump3"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FFA857
+
+  # Turns on LED pattern "Quick"
+  - platform: template
+    id: wall_wash_quick
+    name: "Wall Wash Quick"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF6897
+
+  # Turns on LED pattern "Jump 7"
+  - platform: template
+    id: wall_wash_jump7
+    name: "Wall Wash Jump7"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF8877
+
+  # Turns on LED pattern "Slow"
+  - platform: template
+    id: wall_wash_slow
+    name: "Wall Wash Slow"
+    on_press:
+      remote_transmitter.transmit_lg:
+        nbits: 32
+        data: 0x00FF48B7
+
+# This was an attempt to reduce clutter on the dashboard by creating a "select field."  It didn't work, but I left this here as a reminder of what I tried before.
+select:
+  - platform: template
+    name: "Wash Mode"
+    id: wall_wash_mode
+    options: 
+      - Music 1
+      - Music 2
+      - Music 3
+      - Music 4
+    initial_option: Music 1
+    optimistic: true
+
+##################################################################################################################################
+##################################################################################################################################
+#                                            NEEWER BLUETOOTH LED FLOOD SETTINGS HERE
+##################################################################################################################################
+##################################################################################################################################
+
+# This is a beautiful project I found that does all the hard work of dissecting and recreating the Bluetooth communication with the Neewer lights.
+# With this line, I can include all that code without having to maintain a copy locally.  I have chosen to "hard code" the version since it does everything I want it to and don't want to risk breakage.
+external_components:
+- source: github://litui/esphome-components@v1.0.0
+  #components: [ neewerlight_ble, neewerlight ]  # Including neewerlight_ble allows scanning for Neewer lights via Bluetooth.  I left this here to remind me that if we get new ones, I need to re scan
+  components: [ neewerlight ]  # Not including neewerlight_ble when I don't need it keeps the firmware for the ESP32 more lean.
+
+esp32_ble_tracker:
+  # This is here in case we get any more Neewer floods.  It scans for Neewer Bluetooth-enabled floods
+
+ble_client:  # This is how each light is uniquely identified
+- mac_address: D9:3E:CB:2C:26:19
+  id: neewer_led_inner
+
+- mac_address: F7:04:C3:96:AE:29
+  id: neewer_led_outer
+
+light:
+  # This is the declaration of the light at the rear of the classroom which is furthest from the outside wall
+  - platform: neewerlight
+    name: "Rear Inner Neewer Flood"
+    ble_client_id: neewer_led_inner
+    gamma_correct: 1.0
+    default_transition_length: ${transition}ms
+    icon: mdi:ceiling-fan-light
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # This is the declaration of the light at the rear of the classroom which is closest to the outside wall
+  - platform: neewerlight
+    name: "Rear Outer Neewer Flood"
+    ble_client_id: neewer_led_outer
+    gamma_correct: 1.0
+    default_transition_length: ${transition}ms
+    icon: mdi:ceiling-fan-light
+    restore_mode: RESTORE_DEFAULT_OFF
